@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dot Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            flex-direction: column;
+            font-family: 'Press Start 2P', cursive;
+        }
+        #gameContainer {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+        }
+        #gameCanvas {
+            border: 4px solid #000;
+            image-rendering: pixelated;
+            background-color: #fff;
+        }
+        #balance {
+            font-size: 16px;
+            color: #000;
+            margin: 10px;
+            text-shadow: 1px 1px #fff;
+        }
+        #energyBarContainer {
+            width: 400px;
+            height: 16px;
+            border: 2px solid #000;
+            margin-bottom: 10px;
+            background-color: #fff;
+        }
+        #energyBar {
+            height: 100%;
+            background-color: #00ff00;
+            width: 100%;
+            transition: width 0.2s;
+        }
+        #xpBarContainer {
+            width: 16px;
+            height: 400px;
+            border: 2px solid #000;
+            margin-right: 10px;
+            background-color: #fff;
+            position: relative;
+        }
+        #xpBar {
+            width: 100%;
+            background-color: #00b7eb;
+            position: absolute;
+            bottom: 0;
+            transition: height 0.2s;
+        }
+        #statusContainer {
+            position: absolute;
+            top: 50%;
+            left: 10px;
+            transform: translateY(-50%);
+            font-size: 12px;
+            color: #000;
+            text-shadow: 1px 1px #fff;
+            text-align: left;
+        }
+        #statusContainer div {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        #statusContainer span {
+            margin-right: 5px;
+        }
+        #targetBarContainer {
+            width: 16px;
+            height: 400px;
+            border: 2px solid #000;
+            margin-left: 10px;
+            background-color: #fff;
+            position: relative;
+        }
+        #comboBarContainer {
+            width: 16px;
+            height: 400px;
+            border: 2px solid #000;
+            margin-left: 10px;
+            background-color: #fff;
+            position: relative;
+        }
+        #comboBar {
+            width: 100%;
+            background-color: #ff00ff;
+            position: absolute;
+            bottom: 0;
+            transition: height 0.2s;
+        }
+        .target {
+            width: 100%;
+            background-color: #000;
+            position: absolute;
+        }
+        .button-container {
+            display: flex;
+            align-items: center;
+            margin: 4px;
+        }
+        .pixel-button {
+            font-size: 12px;
+            padding: 8px;
+            background-color: #000;
+            color: #fff;
+            border: 2px solid #000;
+            cursor: pointer;
+            text-shadow: 1px 1px #000;
+            width: 120px;
+            text-align: center;
+        }
+        .pixel-button:hover {
+            background-color: #333;
+        }
+        .button-info {
+            font-size: 12px;
+            color: #000;
+            margin-left: 10px;
+            text-shadow: 1px 1px #fff;
+        }
+        #successMessage {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 32px;
+            color: #00ff00;
+            text-shadow: 2px 2px #000;
+            display: none;
+        }
+        #failMessage {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 32px;
+            color: #ff0000;
+            text-shadow: 2px 2px #000;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="balance">10 DOT | ENERGY: 100/100</div>
+    <div id="energyBarContainer">
+        <div id="energyBar"></div>
+    </div>
+    <div id="gameContainer">
+        <div id="xpBarContainer">
+            <div id="xpBar"></div>
+        </div>
+        <div id="statusContainer">
+            <div><span>⚔️</span>DMG: 1</div>
+            <div><span>💥</span>CRIT: 10%</div>
+            <div><span>🎯</span>ACCURACY: 65%</div>
+            <div><span>⬆️</span>LVL: 1</div>
+        </div>
+        <canvas id="gameCanvas" width="400" height="400"></canvas>
+        <div id="targetBarContainer">
+            <div id="target1" class="target"></div>
+            <div id="target2" class="target"></div>
+            <div id="target3" class="target"></div>
+        </div>
+        <div id="comboBarContainer">
+            <div id="comboBar"></div>
+        </div>
+    </div>
+    <div class="button-container">
+        <button id="damageButton" class="pixel-button">DMG +1</button>
+        <span class="button-info">COST: 10 DOT</span>
+    </div>
+    <div class="button-container">
+        <button id="critButton" class="pixel-button">CRIT +0.5%</button>
+        <span class="button-info">COST: 20 DOT</span>
+    </div>
+    <div class="button-container">
+        <button id="accuracyButton" class="pixel-button">ACCURACY +0.5%</button>
+        <span class="button-info">COST: 15 DOT</span>
+    </div>
+    <div class="button-container">
+        <button id="energyButton" class="pixel-button">ENERGY +10</button>
+        <span class="button-info">COST: 25 DOT</span>
+    </div>
+    <div id="successMessage">SUCCESS!</div>
+    <div id="failMessage">FAILED!</div>
+
+    <script>
+        // game.js kodas
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const balanceDisplay = document.getElementById('balance');
+        const statusContainer = document.getElementById('statusContainer');
+        const damageButton = document.getElementById('damageButton');
+        const critButton = document.getElementById('critButton');
+        const accuracyButton = document.getElementById('accuracyButton');
+        const energyButton = document.getElementById('energyButton');
+        const energyBar = document.getElementById('energyBar');
+        const comboBar = document.getElementById('comboBar');
+        const xpBar = document.getElementById('xpBar');
+        const target1 = document.getElementById('target1');
+        const target2 = document.getElementById('target2');
+        const target3 = Ang = document.getElementById('target3');
+        const successMessage = document.getElementById('successMessage');
+        const failMessage = document.getElementById('failMessage');
+
+        let dots = 500;
+        let dotSize = 10;
+        let clickPower = 1;
+        let damageCost = 10;
+        let critChance = 0.10;
+        let missChance = 0.35;
+        let critCost = 20;
+        let accuracyCost = 15;
+        let energyCost = 25;
+        let energy = 100;
+        let maxEnergy = 100;
+        let comboCharge = 0;
+        let isComboActive = false;
+        let lastComboDecay = Date.now();
+        let xp = 0;
+        let level = 1;
+        let xpToNextLevel = 550;
+
+        const baseDotX = canvas.width / 2;
+        const baseDotY = canvas.height / 2;
+        let dotX = baseDotX;
+        let dotY = baseDotY;
+
+        let damageNumbers = [];
+        let particles = [];
+        let isShakingDot = false;
+        let dotColor = '#000';
+        let dotColorChangeTime = 0;
+
+        const targetHeight = 40;
+        const target3Height = 20;
+        let target1Pos = 0;
+        let target2Pos = 100;
+        let target3Pos = 200;
+        let target1Speed = 2;
+        let target2Speed = -1.5;
+        let target3Speed = 1;
+        let lastSpeedChange = Date.now();
+
+        target1.style.height = `${targetHeight}px`;
+        target2.style.height = `${targetHeight}px`;
+        target3.style.height = `${target3Height}px`;
+
+        function drawDot() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.beginPath();
+            ctx.arc(dotX, dotY, dotSize, 0, Math.PI * 2);
+            ctx.fillStyle = dotColor;
+            ctx.fill();
+            ctx.closePath();
+
+            damageNumbers.forEach((num, index) => {
+                ctx.font = num.combo ? '16px "Press Start 2P"' : '12px "Press Start 2P"';
+                ctx.fillStyle = num.combo ? `rgba(255, 215, 0, ${num.opacity})` :
+                               num.crit ? `rgba(0, 255, 0, ${num.opacity})` :
+                               num.miss ? `rgba(255, 0, 0, ${num.opacity})` :
+                               `rgba(0, 0, 139, ${num.opacity})`;
+                let full26 = num.combo ? 'COMBO' : num.miss ? 'MISS' : num.value;
+                let fullText = num.crit ? `${num.value} CRIT` : num.combo ? 'COMBO' : num.miss ? 'MISS' : num.value;
+                let textWidth = ctx.measureText(fullText).width;
+                let textX = num.x + num.zigzagOffset;
+                let textY = num.y;
+
+                if (num.combo) {
+                    ctx.fillText('COMBO', textX, textY - 16);
+                    ctx.fillText(num.value, textX, textY);
+                } else {
+                    ctx.fillText(fullText, textX, textY);
+                }
+
+                num.x += num.vx;
+                num.y += num.vy;
+                num.zigzagTimer++;
+                if (num.zigzagTimer % 5 === 0) {
+                    num.zigzagOffset = Math.random() * 4 - 2;
+                }
+                num.opacity -= 1 / num.maxLife;
+                num.life--;
+                if (num.life <= 0) damageNumbers.splice(index, 1);
+            });
+
+            particles.forEach((particle, index) => {
+                ctx.fillStyle = particle.color;
+                ctx.fillRect(particle.x, particle.y, 2, 2);
+                particle.x += particle.vx;
+                particle.y += particle.vy;
+                particle.life--;
+                if (particle.life <= 0) particles.splice(index, 1);
+            });
+
+            if (dotColor !== '#000' && Date.now() - dotColorChangeTime >= 1000) {
+                dotColor = '#000';
+            }
+        }
+
+        function updateTargets() {
+            target1Pos += target1Speed;
+            target2Pos += target2Speed;
+            target3Pos += target3Speed;
+
+            if (target1Pos <= 0 || target1Pos >= 400 - targetHeight) {
+                target1Speed = -target1Speed;
+            }
+            if (target2Pos <= 0 || target2Pos >= 400 - targetHeight) {
+                target2Speed = -target2Speed;
+            }
+            if (target3Pos <= 0 || target3Pos >= 400 - target3Height) {
+                target3Speed = -target3Speed;
+            }
+
+            target1.style.bottom = `${target1Pos}px`;
+            target2.style.bottom = `${target2Pos}px`;
+            target3.style.bottom = `${target3Pos}px`;
+
+            if (Date.now() - lastSpeedChange >= 5000) {
+                target1Speed = (Math.random() * 2 + 1) * (target1Speed > 0 ? 1 : -1);
+                target2Speed = (Math.random() * 2 + 1) * (target2Speed > 0 ? 1 : -1);
+                target3Speed = (Math.random() * 2 + 1) * (target3Speed > 0 ? 1 : -1);
+                lastSpeedChange = Date.now();
+            }
+
+            if (Date.now() - lastComboDecay >= 1000) {
+                comboCharge = Math.max(0, comboCharge - 4);
+                lastComboDecay = Date.now();
+                updateDisplay();
+            }
+        }
+
+        function checkTargetCollision() {
+            const target1Top = target1Pos + targetHeight;
+            const target2Top = target2Pos + targetHeight;
+            const target3Top = target3Pos + target3Height;
+
+            const target1Bottom = target1Pos;
+            const target2Bottom = target2Pos;
+            const target3Bottom = target3Pos;
+
+            const collision12 = (target1Bottom <= target2Top && target1Top >= target2Bottom);
+            const collision13 = (target1Bottom <= target3Top && target1Top >= target3Bottom);
+            const collision23 = (target2Bottom <= target3Top && target2Top >= target3Bottom);
+
+            return collision12 || collision13 || collision23;
+        }
+
+        function applyComboDamage() {
+            let damage = 0;
+            let isCombo = true;
+
+            let minDamage = Math.max(Math.floor(clickPower * 0.6), 1);
+            let maxDamage = clickPower;
+            let baseDamage = Math.floor(Math.random() * (maxDamage - minDamage + 1)) + minDamage;
+            let comboMultiplier = Math.random() * (3.5 - 2.5) + 2.5;
+            damage = Math.floor(baseDamage * comboMultiplier);
+            isComboActive = false;
+            comboCharge = 0;
+
+            let angle = Math.random() * 2 * Math.PI;
+            let speed = 2;
+            let vx = Math.cos(angle) * speed;
+            let vy = Math.sin(angle) * speed;
+
+            let offsetDistance = dotSize + 10;
+            let startX = dotX + Math.cos(angle) * offsetDistance;
+            let startY = dotY + Math.sin(angle) * offsetDistance;
+
+            dots += Math.floor(damage);
+            dotSize = Math.min(10 + dots / 100, 10 + 10_000 / 100);
+            damageNumbers.push({ 
+                value: Math.floor(damage), 
+                x: startX, 
+                y: startY, 
+                vx: vx,
+                vy: vy,
+                life: Math.floor(Math.random() * 30) + 60,
+                maxLife: Math.floor(Math.random() * 30) + 60,
+                opacity: 1,
+                crit: false, 
+                miss: false,
+                combo: isCombo,
+                zigzagOffset: 0,
+                zigzagTimer: 0
+            });
+
+            xp += damage * 10;
+            checkLevelUp();
+            updateDisplay();
+            shakeScreen();
+        }
+
+        function checkLevelUp() {
+            while (xp >= xpToNextLevel) {
+                xp -= xpToNextLevel;
+                level++;
+                maxEnergy += 1;
+                energy += 1;
+
+                if (Math.random() < 0.5) {
+                    critChance = Math.min(0.40, critChance + 0.001);
+                } else {
+                    missChance = Math.max(0.10, missChance - 0.001);
+                }
+
+                xpToNextLevel = Math.floor(xpToNextLevel * 2);
+            }
+        }
+
+        function updateDisplay() {
+            balanceDisplay.textContent = `${dots} DOT | ENERGY: ${energy}/${maxEnergy}`;
+            statusContainer.innerHTML = `
+                <div><span>⚔️</span>DMG: ${clickPower}</div>
+                <div><span>💥</span>CRIT: ${(critChance * 100).toFixed(1)}%</div>
+                <div><span>🎯</span>ACCURACY: ${((1 - missChance) * 100).toFixed(1)}%</div>
+                <div><span>⬆️</span>LVL: ${level}</div>
+            `;
+            energyBar.style.width = `${(energy / maxEnergy) * 100}%`;
+            comboBar.style.height = `${comboCharge}%`;
+            xpBar.style.height = `${(xp / xpToNextLevel) * 100}%`;
+            damageButton.textContent = `DMG +1`;
+            critButton.textContent = `CRIT +0.5%`;
+            accuracyButton.textContent = `ACCURACY +0.5%`;
+            energyButton.textContent = `ENERGY +10`;
+            document.querySelector('#damageButton + .button-info').textContent = `COST: ${damageCost} DOT`;
+            document.querySelector('#critButton + .button-info').textContent = `COST: ${critCost} DOT`;
+            document.querySelector('#accuracyButton + .button-info').textContent = `COST: ${accuracyCost} DOT`;
+            document.querySelector('#energyButton + .button-info').textContent = `COST: ${energyCost} DOT`;
+        }
+
+        canvas.addEventListener('click', (event) => {
+            if (energy >= 1) {
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = event.clientX - rect.left;
+                const mouseY = event.clientY - rect.top;
+
+                const distance = Math.sqrt((mouseX - dotX) ** 2 + (mouseY - dotY) ** 2);
+                if (distance <= dotSize) {
+                    energy -= 1;
+
+                    for (let i = 0; i < 10; i++) {
+                        particles.push({
+                            x: dotX,
+                            y: dotY,
+                            vx: (Math.random() - 0.5) * 5,
+                            vy: (Math.random() - 0.5) * 5,
+                            color: Math.random() < 0.5 ? '#ffff99' : '#cc9900',
+                            life: 30
+                        });
+                    }
+
+                    if (checkTargetCollision()) {
+                        let damage = 0;
+                        let isCrit = false;
+                        let isMiss = false;
+
+                        comboCharge = Math.min(100, comboCharge + 11);
+                        if (comboCharge >= 100) {
+                            applyComboDamage();
+                            drawDot();
+                            updateDisplay();
+                            return;
+                        }
+
+                        if (Math.random() < missChance) {
+                            let angle = Math.random() * 2 * Math.PI;
+                            let speed = 2;
+                            let vx = Math.cos(angle) * speed;
+                            let vy = Math.sin(angle) * speed;
+
+                            let offsetDistance = dotSize + 10;
+                            let startX = dotX + Math.cos(angle) * offsetDistance;
+                            let startY = dotY + Math.sin(angle) * offsetDistance;
+
+                            damageNumbers.push({ 
+                                value: 'MISS', 
+                                x: startX, 
+                                y: startY, 
+                                vx: vx,
+                                vy: vy,
+                                life: Math.floor(Math.random() * 30) + 30,
+                                maxLife: Math.floor(Math.random() * 30) + 30,
+                                opacity: 1,
+                                crit: false, 
+                                miss: true,
+                                combo: false,
+                                zigzagOffset: 0,
+                                zigzagTimer: 0
+                            });
+                            isMiss = true;
+                        } else {
+                            let minDamage = Math.max(Math.floor(clickPower * 0.6), 1);
+                            let maxDamage = clickPower;
+                            damage = Math.floor(Math.random() * (maxDamage - minDamage + 1)) + minDamage;
+
+                            if (Math.random() < critChance) {
+                                damage *= Math.floor(2 + Math.random());
+                                isCrit = true;
+                                shakeDot();
+                            }
+
+                            let angle = Math.random() * 2 * Math.PI;
+                            let speed = 2;
+                            let vx = Math.cos(angle) * speed;
+                            let vy = Math.sin(angle) * speed;
+
+                            let offsetDistance = dotSize + 10;
+                            let startX = dotX + Math.cos(angle) * offsetDistance;
+                            let startY = dotY + Math.sin(angle) * offsetDistance;
+
+                            dots += Math.floor(damage);
+                            dotSize = Math.min(10 + dots / 100, 10 + 10_000 / 100);
+                            damageNumbers.push({ 
+                                value: Math.floor(damage), 
+                                x: startX, 
+                                y: startY, 
+                                vx: vx,
+                                vy: vy,
+                                life: Math.floor(Math.random() * 30) + 30,
+                                maxLife: Math.floor(Math.random() * 30) + 30,
+                                opacity: 1,
+                                crit: isCrit, 
+                                miss: false,
+                                combo: false,
+                                zigzagOffset: 0,
+                                zigzagTimer: 0
+                            });
+
+                            xp += damage * 10;
+                            checkLevelUp();
+                        }
+                    } else {
+                        comboCharge = 0;
+                        dotColor = '#ff0000';
+                        dotColorChangeTime = Date.now();
+                    }
+                    drawDot();
+                    updateDisplay();
+                }
+            }
+        });
+
+        function createUpgradeHandler(button, costVar, action, costIncrease) {
+            let cost = costVar;
+            button.addEventListener('click', () => {
+                if (dots >= cost) {
+                    dots -= cost;
+                    let successChance = 0.5;
+                    if (Math.random() < successChance) {
+                        action();
+                        cost = Math.ceil(cost * costIncrease);
+                        showSuccess();
+                    } else {
+                        showFail();
+                    }
+                    if (button === damageButton) damageCost = cost;
+                    if (button === critButton) critCost = cost;
+                    if (button === accuracyButton) accuracyCost = cost;
+                    if (button === energyButton) energyCost = cost;
+                    updateDisplay();
+                }
+            });
+        }
+
+        createUpgradeHandler(damageButton, damageCost, () => { clickPower += 1; }, 1.25);
+        createUpgradeHandler(critButton, critCost, () => { critChance = Math.min(0.40, critChance + 0.005); }, 1.25);
+        createUpgradeHandler(accuracyButton, accuracyCost, () => { missChance = Math.max(0.10, missChance - 0.005); }, 1.25);
+        createUpgradeHandler(energyButton, energyCost, () => { maxEnergy += 10; energy += 10; }, 1.25);
+
+        function showSuccess() {
+            successMessage.style.display = 'block';
+            setTimeout(() => {
+                successMessage.style.display = 'none';
+            }, 1000);
+        }
+
+        function showFail() {
+            failMessage.style.display = 'block';
+            setTimeout(() => {
+                failMessage.style.display = 'none';
+            }, 1000);
+        }
+
+        function shakeScreen() {
+            canvas.style.transform = 'translate(5px, 5px)';
+            setTimeout(() => canvas.style.transform = 'translate(-5px, -5px)', 50);
+            setTimeout(() => canvas.style.transform = 'translate(5px, -5px)', 100);
+            setTimeout(() => canvas.style.transform = 'translate(-5px, 5px)', 150);
+            setTimeout(() => canvas.style.transform = 'translate(0, 0)', 200);
+        }
+
+        function shakeDot() {
+            if (isShakingDot) return;
+            isShakingDot = true;
+            let shakeCount = 0;
+            const shakeInterval = setInterval(() => {
+                shakeCount++;
+                const offset = shakeCount % 2 === 0 ? 2 : -2;
+                dotX = baseDotX + offset;
+                dotY = baseDotY + (shakeCount % 4 < 2 ? 2 : -2);
+                drawDot();
+                if (shakeCount >= 4) {
+                    clearInterval(shakeInterval);
+                    dotX = baseDotX;
+                    dotY = baseDotY;
+                    drawDot();
+                    isShakingDot = false;
+                    shakeScreen();
+                }
+            }, 50);
+        }
+
+        setInterval(() => {
+            if (energy < maxEnergy) {
+                energy += 1;
+                updateDisplay();
+            }
+        }, 5000);
+
+        function animate() {
+            if (!isShakingDot) drawDot();
+            updateTargets();
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+        updateDisplay();
+
+        // newFeatures.js kodas (tuščias, skirtas ateities plėtrai)
+        // Vieta naujoms funkcijoms pridėti
+    </script>
+</body>
+</html>
