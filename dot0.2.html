@@ -1,0 +1,1210 @@
+<!DOCTYPE
+html >
+  <html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dot Game</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+      body {
+          background-color: #fff;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100vh;
+          margin: 0;
+          flex-direction: column;
+          font-family: 'Press Start 2P', cursive;
+      }
+      #gameContainer {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+      }
+      #gameCanvas {
+          border: 4px solid #000;
+          image-rendering: pixelated;
+          background-color: #fff;
+      }
+      #balance {
+          font-size: 16px;
+          color: #000;
+          margin: 10px;
+          text-shadow: 1px 1px #fff;
+      }
+      #energyBarContainer {
+          width: 400px;
+          height: 16px;
+          border: 2px solid #000;
+          margin-bottom: 10px;
+          background-color: #fff;
+      }
+      #energyBar {
+          height: 100%;
+          background-color: #00ff00;
+          width: 100%;
+          transition: width 0.2s;
+      }
+      #xpBarContainer {
+          width: 16px;
+          height: 400px;
+          border: 2px solid #000;
+          margin-right: 10px;
+          background-color: #fff;
+          position: relative;
+      }
+      #xpBar {
+          width: 100%;
+          background-color: #00b7eb;
+          position: absolute;
+          bottom: 0;
+          transition: height 0.2s;
+      }
+      #statusContainer {
+          position: absolute;
+          top: 50%;
+          left: 10px;
+          transform: translateY(-50%);
+          font-size: 12px;
+          color: #000;
+          text-shadow: 1px 1px #fff;
+          text-align: left;
+      }
+      #statusContainer div {
+          display: flex;
+          align-items: center;
+          margin-bottom: 5px;
+      }
+      #statusContainer span {
+          margin-right: 5px;
+      }
+      #targetBarContainer {
+          width: 16px;
+          height: 400px;
+          border: 2px solid #000;
+          margin-left: 10px;
+          background-color: #fff;
+          position: relative;
+      }
+      #comboBarContainer {
+          width: 16px;
+          height: 400px;
+          border: 2px solid #000;
+          margin-left: 10px;
+          background-color: #fff;
+          position: relative;
+      }
+      #comboBar {
+          width: 100%;
+          background-color: #ff00ff;
+          position: absolute;
+          bottom: 0;
+          transition: height 0.2s;
+      }
+      .target {
+          width: 100%;
+          background-color: #000;
+          position: absolute;
+      }
+      .button-container {
+          display: flex;
+          align-items: center;
+          margin: 4px;
+      }
+      .pixel-button {
+          font-size: 12px;
+          padding: 8px;
+          background-color: #000;
+          color: #fff;
+          border: 2px solid #000;
+          cursor: pointer;
+          text-shadow: 1px 1px #000;
+          width: 120px;
+          text-align: center;
+          /* Button press effect styles */
+          position: relative;
+          top: 0;
+          transition: all 0.1s;
+          box-shadow: 0 3px 0 #333;
+      }
+      .pixel-button:hover {
+          background-color: #444;
+          filter: brightness(1.5);
+      }
+      .pixel-button:active {
+          top: 3px;
+          box-shadow: 0 0 0 #333;
+      }
+      .button-info {
+          font-size: 12px;
+          color: #000;
+          margin-left: 10px;
+          text-shadow: 1px 1px #fff;
+      }
+      #successMessage {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          font-size: 32px;
+          color: #00ff00;
+          text-shadow: 2px 2px #000;
+          display: none;
+      }
+      #failMessage {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          font-size: 32px;
+          color: #ff0000;
+          text-shadow: 2px 2px #000;
+          display: none;
+      }
+      /* Inventory styles */
+      #inventoryContainer {
+          display: none;
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background-color: rgba(0, 0, 0, 0.8);
+          border: 4px solid #000;
+          padding: 20px;
+          z-index: 100;
+          width: 320px;
+      }
+      #inventoryGrid {
+          display: grid;
+          grid-template-columns: repeat(5, 1fr);
+          grid-gap: 10px;
+          margin-top: 10px;
+      }
+      .inventory-slot {
+          width: 50px;
+          height: 50px;
+          background-color: #333;
+          border: 2px solid #666;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          position: relative;
+          cursor: pointer;
+          transition: all 0.1s;
+      }
+      .inventory-slot:hover {
+          border-color: #999;
+          filter: brightness(1.5);
+      }
+      .inventory-slot:active {
+          transform: scale(0.95);
+          background-color: #444;
+      }
+      .inventory-item {
+          width: 80%;
+          height: 80%;
+          background-size: contain;
+          background-repeat: no-repeat;
+          background-position: center;
+          position: relative;
+      }
+      .inventory-item-count {
+          position: absolute;
+          bottom: 2px;
+          right: 2px;
+          font-size: 8px;
+          color: white;
+          background-color: rgba(0, 0, 0, 0.7);
+          padding: 2px;
+          min-width: 10px;
+          text-align: center;
+      }
+      .inventory-title {
+          color: white;
+          text-align: center;
+          margin-bottom: 10px;
+          font-size: 16px;
+      }
+      .close-inventory {
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          color: white;
+          cursor: pointer;
+          font-size: 16px;
+          width: 24px;
+          height: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background-color: #333;
+          border: 2px solid #666;
+          transition: all 0.1s;
+      }
+      .close-inventory:hover {
+          background-color: #555;
+          filter: brightness(1.5);
+      }
+      .close-inventory:active {
+          transform: scale(0.9);
+          background-color: #777;
+      }
+      #hpBarContainer {
+          width: 400px;
+          height: 16px;
+          border: 2px solid #000;
+          margin-top: 10px;
+          background-color: #fff;
+      }
+      #hpBar {
+          height: 100%;
+          background-color: #ff0000;
+          width: 100%;
+          transition: width 0.2s;
+      }
+      #inventoryButton {
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          font-size: 12px;
+          padding: 8px;
+          background-color: #000;
+          color: #fff;
+          border: 2px solid #000;
+          cursor: pointer;
+          z-index: 1000;
+          /* Button press effect styles */
+          position: fixed;
+          top: 20px;
+          transition: all 0.1s;
+          box-shadow: 0 3px 0 #333;
+      }
+
+      #inventoryButton:hover {
+          background-color: #333;
+      }
+
+      #inventoryButton:active {
+          top: 23px;
+          box-shadow: 0 0 0 #333;
+      }
+
+      #inventoryButton.has-new::after {
+          content: "";
+          position: absolute;
+          top: -5px;
+          right: -5px;
+          width: 12px;
+          height: 12px;
+          background-color: #ff0000;
+          border-radius: 50%;
+          border: 2px solid #fff;
+          animation: pulse 1.5s infinite;
+      }
+
+      @keyframes pulse {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.2); }
+          100% { transform: scale(1); }
+      }
+  </style>
+</head>
+<body>
+  <div id="balance">10 DOT | ENERGY: 100/100</div>
+  <div id="energyBarContainer">
+      <div id="energyBar"></div>
+  </div>
+  <div id="gameContainer">
+      <div id="xpBarContainer">
+          <div id="xpBar"></div>
+      </div>
+      <div id="statusContainer">
+          <div><span⚔️</span>DMG: 1</div>
+          <div><span>💥</span>CRIT: 10%</div>
+          <div><span>🎯</span>ACCURACY: 65%</div>
+          <div><span>⏰</span>Energy Recovery Time: 25.0s</div>
+          <div><span>⬆️</span>LVL: 1</div>
+      </div>
+      <canvas id="gameCanvas" width="400" height="400"></canvas>
+      <div id="targetBarContainer">
+          <div id="target1" class="target"></div>
+          <div id="target2" class="target"></div>
+          <div id="target3" class="target"></div>
+      </div>
+      <div id="comboBarContainer">
+          <div id="comboBar"></div>
+      </div>
+  </div>
+  <div class="button-container">
+      <button id="damageButton" class="pixel-button">DMG +1</button>
+      <span class="button-info">COST: 10 DOT</span>
+  </div>
+  <div class="button-container">
+      <button id="critButton" class="pixel-button">CRIT +0.5%</button>
+      <span class="button-info">COST: 20 DOT</span>
+  </div>
+  <div class="button-container">
+      <button id="accuracyButton" class="pixel-button">ACCURACY +0.5%</button>
+      <span class="button-info">COST: 15 DOT</span>
+  </div>
+  <div class="button-container">
+      <button id="recoveryButton" class="pixel-button">RECOVERY TIME -0.2s</button>
+      <span class="button-info">COST: 30 DOT</span>
+  </div>
+  <div id="successMessage">SUCCESS!</div>
+  <div id="failMessage">FAILED!</div>
+  
+  <button id="inventoryButton" class="pixel-button">INVENTORY</button>
+  
+  <div id="inventoryContainer">
+      <div class="inventory-title">INVENTORY</div>
+      <div class="close-inventory">X</div>
+      <div id="inventoryGrid">
+          <!-- Inventory slots will be generated here -->
+      </div>
+  </div>
+
+  <script>
+      // game.js kodas
+      const canvas = document.getElementById('gameCanvas');
+      const ctx = canvas.getContext('2d');
+      const balanceDisplay = document.getElementById('balance');
+      const statusContainer = document.getElementById('statusContainer');
+      const damageButton = document.getElementById('damageButton');
+      const critButton = document.getElementById('critButton');
+      const accuracyButton = document.getElementById('accuracyButton');
+      const recoveryButton = document.getElementById('recoveryButton');
+      const energyBar = document.getElementById('energyBar');
+      const comboBar = document.getElementById('comboBar');
+      const xpBar = document.getElementById('xpBar');
+      const hpBar = document.getElementById('hpBar');
+      const target1 = document.getElementById('target1');
+      const target2 = document.getElementById('target2');
+      const target3 = document.getElementById('target3');
+      const successMessage = document.getElementById('successMessage');
+      const failMessage = document.getElementById('failMessage');
+      const inventoryButton = document.getElementById('inventoryButton');
+      const inventoryContainer = document.getElementById('inventoryContainer');
+      const inventoryGrid = document.getElementById('inventoryGrid');
+      const closeInventory = document.querySelector('.close-inventory');
+
+      let dots = 500;
+      let dotSize = 10;
+      let clickPower = 1;
+      let damageCost = 10;
+      let critChance = 0.10;
+      let missChance = 0.35;
+      let critCost = 20;
+      let accuracyCost = 15;
+      let recoveryCost = 30;
+      let recoverySuccessChance = 0.5;
+      let energyRecoveryTime = 25000; // 25 sekundės (25000 ms)
+      let energy = 100;
+      let maxEnergy = 100;
+      let comboCharge = 0;
+      let isComboActive = false;
+      let lastComboDecay = Date.now();
+      let xp = 0;
+      let level = 1;
+      let xpToNextLevel = 550;
+
+      // Dot growth system
+      let dotMaxSize = 10.5; // Starting dot size
+      const maxPossibleDotSize = 10 + 10_000 / 100; // Maximum possible dot size at 10k dots
+      let totalDamageDealt = 0; // Track total damage for drops
+      let lastDropAt = 0; // Last damage threshold where a drop occurred
+
+      const baseDotX = canvas.width / 2;
+      const baseDotY = canvas.height / 2;
+      let dotX = baseDotX;
+      let dotY = baseDotY;
+
+      let damageNumbers = [];
+      let particles = [];
+      let isShakingDot = false;
+      let dotColor = '#000';
+      let dotColorChangeTime = 0;
+
+      const targetHeight = 40;
+      const target3Height = 20;
+      let target1Pos = 0;
+      let target2Pos = 100;
+      let target3Pos = 200;
+      let target1Speed = 2;
+      let target2Speed = -1.5;
+      let target3Speed = 1;
+      let lastSpeedChange = Date.now();
+
+      target1.style.height = `${targetHeight}px`;
+      target2.style.height = `${targetHeight}px`;
+      target3.style.height = `${target3Height}px`;
+
+      // Inventory system
+      const inventorySize = 10;
+      let inventory = Array(inventorySize).fill(null);
+      
+      // Item types
+      const itemTypes = {
+          HEALTH_POTION: {
+              name: "Health Potion",
+              color: "#ff0000",
+              use: function() {
+                  energy = Math.min(maxEnergy, energy + 20);
+                  updateDisplay();
+                  return true;
+              }
+          },
+          ENERGY_POTION: {
+              name: "Energy Potion",
+              color: "#00ff00",
+              use: function() {
+                  energy = Math.min(maxEnergy, energy + 20);
+                  updateDisplay();
+                  return true;
+              }
+          },
+          DAMAGE_BOOST: {
+              name: "Damage Boost",
+              color: "#ffaa00",
+              use: function() {
+                  clickPower += 2;
+                  updateDisplay();
+                  return true;
+              }
+          },
+          ATOM: {
+              name: "H₂O Molecule",
+              color: null, // We'll draw this custom
+              use: function() {
+                  clickPower += 1;
+                  energy = Math.min(maxEnergy, energy + 10);
+                  updateDisplay();
+                  return true;
+              },
+              render: function(ctx, x, y, width, height) {
+                  // Draw molecule
+                  const centerX = x + width/2;
+                  const centerY = y + height/2;
+                  const radius = Math.min(width, height) * 0.2;
+                  
+                  // Draw center (oxygen)
+                  ctx.beginPath();
+                  ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                  ctx.fillStyle = "#0088ff";
+                  ctx.fill();
+                  
+                  // Draw hydrogen atoms
+                  ctx.beginPath();
+                  ctx.arc(centerX - radius*1.5, centerY + radius*1.5, radius*0.6, 0, Math.PI * 2);
+                  ctx.fillStyle = "#ffffff";
+                  ctx.fill();
+                  ctx.strokeStyle = "#000000";
+                  ctx.lineWidth = 1;
+                  ctx.stroke();
+                  
+                  ctx.beginPath();
+                  ctx.arc(centerX + radius*1.5, centerY + radius*1.5, radius*0.6, 0, Math.PI * 2);
+                  ctx.fillStyle = "#ffffff";
+                  ctx.fill();
+                  ctx.strokeStyle = "#000000";
+                  ctx.lineWidth = 1;
+                  ctx.stroke();
+                  
+                  // Draw electron orbits
+                  const time = Date.now() / 1000;
+                  for (let i = 0; i < 2; i++) {
+                      const orbitRadius = radius * 2;
+                      const electronX = centerX + Math.cos(time * 2 + i * Math.PI) * orbitRadius;
+                      const electronY = centerY + Math.sin(time * 2 + i * Math.PI) * orbitRadius;
+                      
+                      ctx.beginPath();
+                      ctx.arc(electronX, electronY, radius * 0.3, 0, Math.PI * 2);
+                      ctx.fillStyle = "#00ffff";
+                      ctx.fill();
+                  }
+              }
+          },
+          HELIUM: {
+              name: "He Atom",
+              color: null, // We'll draw this custom
+              use: function() {
+                  energy = Math.min(maxEnergy + 10, energy + 30);
+                  updateDisplay();
+                  return true;
+              },
+              render: function(ctx, x, y, width, height) {
+                  // Draw helium atom
+                  const centerX = x + width/2;
+                  const centerY = y + height/2;
+                  const radius = Math.min(width, height) * 0.25;
+                  
+                  // Draw nucleus (helium)
+                  ctx.beginPath();
+                  ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                  ctx.fillStyle = "#ff9900";
+                  ctx.fill();
+                  ctx.strokeStyle = "#000000";
+                  ctx.lineWidth = 1;
+                  ctx.stroke();
+                  
+                  // Draw electron orbits
+                  const time = Date.now() / 800;
+                  for (let i = 0; i < 2; i++) {
+                      const orbitRadius = radius * 2.5;
+                      const electronX = centerX + Math.cos(time * 2 + i * Math.PI) * orbitRadius;
+                      const electronY = centerY + Math.sin(time * 2 + i * Math.PI) * orbitRadius;
+                      
+                      ctx.beginPath();
+                      ctx.arc(electronX, electronY, radius * 0.3, 0, Math.PI * 2);
+                      ctx.fillStyle = "#ffcc00";
+                      ctx.fill();
+                  }
+              }
+          }
+      };
+
+      // Initialize inventory slots
+      function initInventory() {
+          inventoryGrid.innerHTML = '';
+          for (let i = 0; i < inventorySize; i++) {
+              const slot = document.createElement('div');
+              slot.className = 'inventory-slot';
+              slot.dataset.slot = i;
+              slot.addEventListener('click', () => useItem(i));
+              inventoryGrid.appendChild(slot);
+          }
+          
+          // Add some starter items
+          addItemToInventory(itemTypes.HEALTH_POTION, 2);
+          addItemToInventory(itemTypes.ENERGY_POTION, 1);
+      }
+
+      // Add item to inventory
+      function addItemToInventory(itemType, count = 1) {
+          // Check if item already exists in inventory
+          for (let i = 0; i < inventory.length; i++) {
+              if (inventory[i] && inventory[i].type.name === itemType.name) {
+                  inventory[i].count += count;
+                  inventory[i].isNew = true;
+                  updateInventoryDisplay();
+                  // Add notification indicator to inventory button
+                  inventoryButton.classList.add('has-new');
+                  return true;
+              }
+          }
+          
+          // Find empty slot
+          for (let i = 0; i < inventory.length; i++) {
+              if (!inventory[i]) {
+                  inventory[i] = {
+                      type: itemType,
+                      count: count,
+                      isNew: true
+                  };
+                  updateInventoryDisplay();
+                  // Add notification indicator to inventory button
+                  inventoryButton.classList.add('has-new');
+                  return true;
+              }
+          }
+          
+          return false; // Inventory full
+      }
+
+      // Use item from inventory
+      function useItem(slotIndex) {
+          const item = inventory[slotIndex];
+          if (item) {
+              if (item.type.use()) {
+                  item.count--;
+                  if (item.count <= 0) {
+                      inventory[slotIndex] = null;
+                  }
+                  updateInventoryDisplay();
+              }
+          }
+      }
+
+      // Update inventory display
+      function updateInventoryDisplay() {
+          const slots = document.querySelectorAll('.inventory-slot');
+          
+          // Create an offscreen canvas for drawing items
+          const itemCanvas = document.createElement('canvas');
+          itemCanvas.width = 50;
+          itemCanvas.height = 50;
+          const itemCtx = itemCanvas.getContext('2d');
+          
+          slots.forEach((slot, index) => {
+              slot.innerHTML = '';
+              const item = inventory[index];
+              if (item) {
+                  if (item.type.color === null && item.type.render) {
+                      // Custom rendering for special items
+                      const itemElement = document.createElement('canvas');
+                      itemElement.className = 'inventory-item';
+                      itemElement.width = 50;
+                      itemElement.height = 50;
+                      const ctx = itemElement.getContext('2d');
+                      
+                      // Draw the item
+                      item.type.render(ctx, 5, 5, 40, 40);
+                      
+                      // Add count
+                      ctx.font = '8px "Press Start 2P"';
+                      ctx.fillStyle = 'white';
+                      ctx.fillRect(30, 30, 15, 15);
+                      ctx.fillStyle = 'black';
+                      ctx.fillText(item.count.toString(), 35, 42);
+                      
+                      slot.appendChild(itemElement);
+                      
+                      // If this is a new item, add highlight effect
+                      if (item.isNew) {
+                          slot.style.boxShadow = '0 0 10px #ffff00';
+                          item.isNew = false;
+                          setTimeout(() => {
+                              slot.style.boxShadow = '';
+                          }, 3000);
+                      }
+                  } else {
+                      // Standard colored items
+                      const itemElement = document.createElement('div');
+                      itemElement.className = 'inventory-item';
+                      itemElement.style.backgroundColor = item.type.color;
+                      
+                      const countElement = document.createElement('div');
+                      countElement.className = 'inventory-item-count';
+                      countElement.textContent = item.count;
+                      
+                      itemElement.appendChild(countElement);
+                      slot.appendChild(itemElement);
+                      
+                      // If this is a new item, add highlight effect
+                      if (item.isNew) {
+                          slot.style.boxShadow = '0 0 10px #ffff00';
+                          item.isNew = false;
+                          setTimeout(() => {
+                              slot.style.boxShadow = '';
+                          }, 3000);
+                      }
+                  }
+              }
+          });
+      }
+
+      // Inventory button event
+      inventoryButton.addEventListener('click', () => {
+          inventoryContainer.style.display = 'block';
+          // Remove notification indicator when inventory is opened
+          inventoryButton.classList.remove('has-new');
+      });
+
+      // Close inventory button event
+      closeInventory.addEventListener('click', () => {
+          inventoryContainer.style.display = 'none';
+      });
+
+      function drawDot() {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          
+          // Use dot size directly without HP calculation
+          ctx.beginPath();
+          ctx.arc(dotX, dotY, dotSize, 0, Math.PI * 2);
+          ctx.fillStyle = dotColor;
+          ctx.fill();
+          ctx.closePath();
+
+          damageNumbers.forEach((num, index) => {
+              ctx.font = num.combo ? '16px "Press Start 2P"' : '12px "Press Start 2P"';
+              ctx.fillStyle = num.combo ? `rgba(255, 215, 0, ${num.opacity})` :
+                             num.crit ? `rgba(0, 255, 0, ${num.opacity})` :
+                             num.miss ? `rgba(255, 0, 0, ${num.opacity})` :
+                             `rgba(0, 0, 139, ${num.opacity})`;
+              let fullText = num.combo ? 'COMBO' : num.miss ? 'MISS' : num.value;
+              let fullTextDisplay = num.crit ? `${num.value} CRIT` : num.combo ? 'COMBO' : num.miss ? 'MISS' : num.value;
+              let textWidth = ctx.measureText(fullTextDisplay).width;
+              let textX = num.x + num.zigzagOffset;
+              let textY = num.y;
+
+              if (num.combo) {
+                  ctx.fillText('COMBO', textX, textY - 16);
+                  ctx.fillText(num.value, textX, textY);
+              } else {
+                  ctx.fillText(fullTextDisplay, textX, textY);
+              }
+
+              num.x += num.vx;
+              num.y += num.vy;
+              num.zigzagTimer++;
+              if (num.zigzagTimer % 5 === 0) {
+                  num.zigzagOffset = Math.random() * 4 - 2;
+              }
+              num.opacity -= 1 / num.maxLife;
+              num.life--;
+              if (num.life <= 0) damageNumbers.splice(index, 1);
+          });
+
+          particles.forEach((particle, index) => {
+              ctx.fillStyle = particle.color;
+              ctx.fillRect(particle.x, particle.y, 2, 2);
+              particle.x += particle.vx;
+              particle.y += particle.vy;
+              particle.life--;
+              if (particle.life <= 0) particles.splice(index, 1);
+          });
+
+          if (dotColor !== '#000' && Date.now() - dotColorChangeTime >= 1000) {
+              dotColor = '#000';
+          }
+      }
+
+      function updateTargets() {
+          target1Pos += target1Speed;
+          target2Pos += target2Speed;
+          target3Pos += target3Speed;
+
+          if (target1Pos <= 0 || target1Pos >= 400 - targetHeight) {
+              target1Speed = -target1Speed;
+          }
+          if (target2Pos <= 0 || target2Pos >= 400 - targetHeight) {
+              target2Speed = -target2Speed;
+          }
+          if (target3Pos <= 0 || target3Pos >= 400 - target3Height) {
+              target3Speed = -target3Speed;
+          }
+
+          target1.style.bottom = `${target1Pos}px`;
+          target2.style.bottom = `${target2Pos}px`;
+          target3.style.bottom = `${target3Pos}px`;
+
+          if (Date.now() - lastSpeedChange >= 5000) {
+              target1Speed = (Math.random() * 2 + 1) * (target1Speed > 0 ? 1 : -1);
+              target2Speed = (Math.random() * 2 + 1) * (target2Speed > 0 ? 1 : -1);
+              target3Speed = (Math.random() * 2 + 1) * (target3Speed > 0 ? 1 : -1);
+              lastSpeedChange = Date.now();
+          }
+
+          if (Date.now() - lastComboDecay >= 1000) {
+              comboCharge = Math.max(0, comboCharge - 4);
+              lastComboDecay = Date.now();
+              updateDisplay();
+          }
+      }
+
+      function checkTargetCollision() {
+          const target1Top = target1Pos + targetHeight;
+          const target2Top = target2Pos + targetHeight;
+          const target3Top = target3Pos + target3Height;
+
+          const target1Bottom = target1Pos;
+          const target2Bottom = target2Pos;
+          const target3Bottom = target3Pos;
+
+          const collision12 = (target1Bottom <= target2Top && target1Top >= target2Bottom);
+          const collision13 = (target1Bottom <= target3Top && target1Top >= target3Bottom);
+          const collision23 = (target2Bottom <= target3Top && target2Top >= target3Bottom);
+
+          return collision12 || collision13 || collision23;
+      }
+
+      function applyComboDamage() {
+          let damage = 0;
+          let isCombo = true;
+
+          let minDamage = Math.max(Math.floor(clickPower * 0.6), 1);
+          let maxDamage = clickPower;
+          let baseDamage = Math.floor(Math.random() * (maxDamage - minDamage + 1)) + minDamage;
+          let comboMultiplier = Math.random() * (3.5 - 2.5) + 2.5;
+          damage = Math.floor(baseDamage * comboMultiplier);
+          isComboActive = false;
+          comboCharge = 0;
+
+          let angle = Math.random() * 2 * Math.PI;
+          let speed = 2;
+          let vx = Math.cos(angle) * speed;
+          let vy = Math.sin(angle) * speed;
+
+          let offsetDistance = dotSize + 10;
+          let startX = dotX + Math.cos(angle) * offsetDistance;
+          let startY = dotY + Math.sin(angle) * offsetDistance;
+
+          dots += Math.floor(damage);
+          dotSize = Math.min(10 + dots / 100, 10 + 10_000 / 100);
+          damageNumbers.push({ 
+              value: Math.floor(damage), 
+              x: startX, 
+              y: startY, 
+              vx: vx,
+              vy: vy,
+              life: Math.floor(Math.random() * 30) + 60,
+              maxLife: Math.floor(Math.random() * 30) + 60,
+              opacity: 1,
+              crit: false, 
+              miss: false,
+              combo: isCombo,
+              zigzagOffset: 0,
+              zigzagTimer: 0
+          });
+
+          xp += damage * 10;
+          checkLevelUp();
+          updateDisplay();
+          shakeScreen();
+      }
+
+      function checkLevelUp() {
+          while (xp >= xpToNextLevel) {
+              xp -= xpToNextLevel;
+              level++;
+              maxEnergy += 1;
+              energy += 1;
+
+              if (Math.random() < 0.5) {
+                  critChance = Math.min(0.40, critChance + 0.001);
+              } else {
+                  missChance = Math.max(0.10, missChance - 0.001);
+              }
+
+              xpToNextLevel = Math.floor(xpToNextLevel * 2);
+              updateDisplay();
+          }
+      }
+
+      function updateDisplay() {
+          balanceDisplay.textContent = `${dots} DOT | ENERGY: ${energy}/${maxEnergy}`;
+          statusContainer.innerHTML = `
+              <div><span>⚔️</span>DMG: ${clickPower}</div>
+              <div><span>💥</span>CRIT: ${(critChance * 100).toFixed(1)}%</div>
+              <div><span>🎯</span>ACCURACY: ${((1 - missChance) * 100).toFixed(1)}%</div>
+              <div><span>⏰</span>Energy Recovery Time: ${(energyRecoveryTime / 1000).toFixed(1)}s</div>
+              <div><span>⬆️</span>LVL: ${level}</div>
+          `;
+          energyBar.style.width = `${(energy / maxEnergy) * 100}%`;
+          comboBar.style.height = `${comboCharge}%`;
+          xpBar.style.height = `${(xp / xpToNextLevel) * 100}%`;
+          damageButton.textContent = `DMG +1`;
+          critButton.textContent = `CRIT +0.5%`;
+          accuracyButton.textContent = `ACCURACY +0.5%`;
+          recoveryButton.textContent = `RECOVERY TIME -0.2s`;
+          document.querySelector('#damageButton + .button-info').textContent = `COST: ${damageCost} DOT`;
+          document.querySelector('#critButton + .button-info').textContent = `COST: ${critCost} DOT`;
+          document.querySelector('#accuracyButton + .button-info').textContent = `COST: ${accuracyCost} DOT`;
+          document.querySelector('#recoveryButton + .button-info').textContent = `COST: ${recoveryCost} DOT`;
+
+      }
+
+// Add hover effect for the dot
+canvas.addEventListener('mousemove', (event) => {
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = event.clientX - rect.left;
+    const mouseY = event.clientY - rect.top;
+    
+    const distance = Math.sqrt((mouseX - dotX) ** 2 + (mouseY - dotY) ** 2);
+    if (distance <= dotSize) {
+        // Mouse is over the dot - make it slightly brighter
+        dotColor = '#333';
+    } else if (dotColor === '#333') {
+        // Mouse left the dot - restore original color
+        dotColor = '#000';
+    }
+});
+
+// Reset dot color when mouse leaves canvas
+canvas.addEventListener('mouseleave', () => {
+    if (dotColor === '#333') {
+        dotColor = '#000';
+    }
+});
+
+      canvas.addEventListener('click', (event) => {
+          if (energy >= 1) {
+              const rect = canvas.getBoundingClientRect();
+              const mouseX = event.clientX - rect.left;
+              const mouseY = event.clientY - rect.top;
+
+              // Calculate current dot size based on HP
+              const currentDotSize = dotSize;
+              
+              const distance = Math.sqrt((mouseX - dotX) ** 2 + (mouseY - dotY) ** 2);
+              if (distance <= currentDotSize) {
+                  energy -= 1;
+
+    // Flash effect when clicking the dot
+    dotColor = '#555';
+    setTimeout(() => {
+        if (dotColor === '#555') {
+            dotColor = '#000';
+        }
+    }, 100);
+
+                  for (let i = 0; i < 10; i++) {
+                      particles.push({
+                          x: dotX,
+                          y: dotY,
+                          vx: (Math.random() - 0.5) * 5,
+                          vy: (Math.random() - 0.5) * 5,
+                          color: Math.random() < 0.5 ? '#ffff99' : '#cc9900',
+                          life: 30
+                      });
+                  }
+
+                  if (checkTargetCollision()) {
+                      let damage = 0;
+                      let isCrit = false;
+                      let isMiss = false;
+
+                      comboCharge = Math.min(100, comboCharge + 11);
+                      if (comboCharge >= 100) {
+                          applyComboDamage();
+                          drawDot();
+                          updateDisplay();
+                          return;
+                      }
+
+                      if (Math.random() < missChance) {
+                          let angle = Math.random() * 2 * Math.PI;
+                          let speed = 2;
+                          let vx = Math.cos(angle) * speed;
+                          let vy = Math.sin(angle) * speed;
+
+                          let offsetDistance = currentDotSize + 10;
+                          let startX = dotX + Math.cos(angle) * offsetDistance;
+                          let startY = dotY + Math.sin(angle) * offsetDistance;
+
+                          damageNumbers.push({ 
+                              value: 'MISS', 
+                              x: startX, 
+                              y: startY, 
+                              vx: vx,
+                              vy: vy,
+                              life: Math.floor(Math.random() * 30) + 30,
+                              maxLife: Math.floor(Math.random() * 30) + 30,
+                              opacity: 1,
+                              crit: false, 
+                              miss: true,
+                              combo: false,
+                              zigzagOffset: 0,
+                              zigzagTimer: 0
+                          });
+                          isMiss = true;
+                      } else {
+                          let minDamage = Math.max(Math.floor(clickPower * 0.6), 1);
+                          let maxDamage = clickPower;
+                          damage = Math.floor(Math.random() * (maxDamage - minDamage + 1)) + minDamage;
+
+                          if (Math.random() < critChance) {
+                              damage *= Math.floor(2 + Math.random());
+                              isCrit = true;
+                              shakeDot();
+                          }
+
+                          let angle = Math.random() * 2 * Math.PI;
+                          let speed = 2;
+                          let vx = Math.cos(angle) * speed;
+                          let vy = Math.sin(angle) * speed;
+
+                          let offsetDistance = currentDotSize + 10;
+                          let startX = dotX + Math.cos(angle) * offsetDistance;
+                          let startY = dotY + Math.sin(angle) * offsetDistance;
+
+                          dots += Math.floor(damage);
+                          
+                          // Track total damage for drops
+                          totalDamageDealt += damage;
+
+                          // Check if we should drop an item (MUCH more frequently - 10x more often)
+                          if (totalDamageDealt - lastDropAt >= 100 + Math.floor(Math.random() * 400)) {
+                              lastDropAt = totalDamageDealt;
+                              
+                              // Random chance to drop items (increased probabilities)
+                              const itemRoll = Math.random();
+                              if (itemRoll < 0.3) {
+                                  addItemToInventory(itemTypes.HEALTH_POTION);
+                              } else if (itemRoll < 0.5) {
+                                  addItemToInventory(itemTypes.ENERGY_POTION);
+                              } else if (itemRoll < 0.7) {
+                                  addItemToInventory(itemTypes.ATOM);
+                              } else if (itemRoll < 0.9) {
+                                  addItemToInventory(itemTypes.HELIUM);
+                              } else {
+                                  addItemToInventory(itemTypes.DAMAGE_BOOST);
+                              }
+                              
+                              // Add a visual indicator that an item was dropped
+                              for (let i = 0; i < 20; i++) {
+                                  particles.push({
+                                      x: dotX,
+                                      y: dotY,
+                                      vx: (Math.random() - 0.5) * 8,
+                                      vy: (Math.random() - 0.5) * 8,
+                                      color: Math.random() < 0.5 ? '#ffff00' : '#00ffff',
+                                      life: 60
+                                  });
+                              }
+                          }
+                          
+                          damageNumbers.push({ 
+                              value: Math.floor(damage), 
+                              x: startX, 
+                              y: startY, 
+                              vx: vx,
+                              vy: vy,
+                              life: Math.floor(Math.random() * 30) + 30,
+                              maxLife: Math.floor(Math.random() * 30) + 30,
+                              opacity: 1,
+                              crit: isCrit, 
+                              miss: false,
+                              combo: false,
+                              zigzagOffset: 0,
+                              zigzagTimer: 0
+                          });
+
+                          xp += damage * 10;
+                          checkLevelUp();
+                      }
+                  } else {
+                      comboCharge = 0;
+                      dotColor = '#ff0000';
+                      dotColorChangeTime = Date.now();
+                  }
+                  drawDot();
+                  updateDisplay();
+              }
+          }
+      });
+
+      function createUpgradeHandler(button, costVar, action, costIncrease) {
+          let cost = costVar;
+          button.addEventListener('click', () => {
+              if (dots >= cost) {
+                  dots -= cost;
+                  let successChance = 0.5;
+                  if (Math.random() < successChance) {
+                      action();
+                      cost = Math.ceil(cost * costIncrease);
+                      showSuccess();
+                  } else {
+                      showFail();
+                  }
+                  if (button === damageButton) damageCost = cost;
+                  if (button === critButton) critCost = cost;
+                  if (button === accuracyButton) accuracyCost = cost;
+                  updateDisplay();
+              } else {
+                  showFail();
+              }
+          });
+      }
+
+      createUpgradeHandler(damageButton, damageCost, () => { clickPower += 1; }, 1.25);
+      createUpgradeHandler(critButton, critCost, () => { critChance = Math.min(0.40, critChance + 0.005); }, 1.25);
+      createUpgradeHandler(accuracyButton, accuracyCost, () => { missChance = Math.max(0.10, missChance - 0.005); }, 1.25);
+
+      recoveryButton.addEventListener('click', () => {
+          if (dots >= recoveryCost) {
+              dots -= recoveryCost;
+              if (Math.random() < recoverySuccessChance) {
+                  energyRecoveryTime -= 200; // 0.2 sek. = 200 ms
+                  recoveryCost = Math.round(recoveryCost * 1.25);
+                  showSuccess();
+              } else {
+                  showFail();
+              }
+              updateDisplay();
+          } else {
+              showFail();
+          }
+      });
+
+      function showSuccess() {
+          successMessage.style.display = 'block';
+          setTimeout(() => {
+              successMessage.style.display = 'none';
+          }, 1000);
+      }
+
+      function showFail() {
+          failMessage.style.display = 'block';
+          setTimeout(() => {
+              failMessage.style.display = 'none';
+          }, 1000);
+      }
+
+      function shakeScreen() {
+          canvas.style.transform = 'translate(5px, 5px)';
+          setTimeout(() => canvas.style.transform = 'translate(-5px, -5px)', 50);
+          setTimeout(() => canvas.style.transform = 'translate(5px, -5px)', 100);
+          setTimeout(() => canvas.style.transform = 'translate(-5px, 5px)', 150);
+          setTimeout(() => canvas.style.transform = 'translate(0, 0)', 200);
+      }
+
+      function shakeDot() {
+          if (isShakingDot) return;
+          isShakingDot = true;
+          let shakeCount = 0;
+          const shakeInterval = setInterval(() => {
+              shakeCount++;
+              const offset = shakeCount % 2 === 0 ? 2 : -2;
+              dotX = baseDotX + offset;
+              dotY = baseDotY + (shakeCount % 4 < 2 ? 2 : -2);
+              drawDot();
+              if (shakeCount >= 4) {
+                  clearInterval(shakeInterval);
+                  dotX = baseDotX;
+                  dotY = baseDotY;
+                  drawDot();
+                  isShakingDot = false;
+                  shakeScreen();
+              }
+          }, 50);
+      }
+
+      function recoverEnergy() {
+          if (energy < maxEnergy) {
+              energy += 1;
+              updateDisplay();
+          }
+          setTimeout(recoverEnergy, energyRecoveryTime);
+      }
+      setTimeout(recoverEnergy, energyRecoveryTime);
+
+      function animate() {
+          if (!isShakingDot) drawDot();
+          updateTargets();
+          
+          // Redraw inventory items that need animation
+          const slots = document.querySelectorAll('.inventory-slot');
+          slots.forEach((slot, index) => {
+              const item = inventory[index];
+              if (item && item.type.color === null && item.type.render) {
+                  const canvas = slot.querySelector('canvas');
+                  if (canvas) {
+                      const ctx = canvas.getContext('2d');
+                      ctx.clearRect(0, 0, canvas.width, canvas.height);
+                      item.type.render(ctx, 5, 5, 40, 40);
+                      
+                      // Re-add count
+                      ctx.font = '8px "Press Start 2P"';
+                      ctx.fillStyle = 'white';
+                      ctx.fillRect(30, 30, 15, 15);
+                      ctx.fillStyle = 'black';
+                      ctx.fillText(item.count.toString(), 35, 42);
+                  }
+              }
+          });
+          
+          requestAnimationFrame(animate);
+      }
+
+      // Initialize inventory
+      initInventory();
+      
+      animate();
+      updateDisplay();
+
+      // Move inventory button to a more visible position
+      document.body.appendChild(inventoryButton);
+  </script>
+</body>
+</html>
